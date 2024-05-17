@@ -62,10 +62,10 @@ For running the program, follow these steps:
 python3 Setup.py
 ```
 
-2 : Then, run the ```Main.py``` file:
+2 : Then, run the ```LMS.py``` file:
 
 ```python
-python3 Main.py
+python3 LMS.py
 ```
 
 3 : Follow the on-screen menu to perform various operations.
