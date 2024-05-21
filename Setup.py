@@ -1,11 +1,62 @@
 import mysql.connector as mq
 import os
-from typing import Optional
+from typing import Optional, List
+import os
+import logging
 from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Configure Logging
+logging.basicConfig(
+    filename = 'LMS.log',
+    level = logging.INFO,
+    format = '%(asctime)s - %(message)s',
+    datefmt = '%d-%m-%Y %H:%M:%S'
+)
+
+# Header Text for Log File
+header_text = """
+--------------------------------------------------------------------------------------
+                                        LOG FILE
+--------------------------------------------------------------------------------------
+                                Library Management System
+--------------------------------------------------------------------------------------
+
+    Date    Time                            Action
+--------------------------------------------------------------------------------------
+
+"""
+
+# Check if the log file is empty
+if os.path.getsize('LMS.log') == 0:
+    # Write the header text to the log file
+    with open('LMS.log', 'a') as log_file:
+        log_file.write(header_text)
+
+# Decorator for logging
+def log_action(action):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            logging.info(f"Action Started: {action}")
+            result = func(*args, **kwargs)
+            logging.info(f"Action Completed: {action}")
+            return result
+        return wrapper
+    return decorator
+
+# Context Manager for Database Connection
+class DatabaseConnection:
+    def __enter__(self):
+        self.con = get_database_connection()
+        return self.con
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.con:
+            self.con.close()
+
 # Function to establish database connection with error handling
+@log_action("Establishing Database Connection")
 def get_database_connection() -> Optional[mq.MySQLConnection]:
     """
     Establishes a connection to the MySQL database.
@@ -24,12 +75,12 @@ def get_database_connection() -> Optional[mq.MySQLConnection]:
         exit()
 
 # Function to initialize database tables
+@log_action("Initializing Database Tables")
 def initialize_database() -> None:
     """
     Initializes the database by creating necessary tables if they don't exist.
     """
-    con: Optional[mq.MySQLConnection] = get_database_connection()
-    if con:
+    with DatabaseConnection() as con:
         cur: mq.cursor.MySQLCursor = con.cursor()
 
         # USERS TABLE
@@ -69,7 +120,6 @@ def initialize_database() -> None:
             )
         ''')
         con.commit()
-        con.close()
 
 # Main function
 def main() -> None:
